@@ -165,7 +165,7 @@ func deleteProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	fmt.Println("Server started on :8080")
+	fmt.Println("Server started on :8000")
 
 	http.HandleFunc("GET /api/products", getProducts)
 	http.HandleFunc("POST /api/products", postProduct)
@@ -185,7 +185,7 @@ func main() {
 		})
 	})
 
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8000", nil)
 	if err != nil {
 		fmt.Println("Failed to start server:", err)
 	}
