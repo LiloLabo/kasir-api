@@ -20,6 +20,165 @@ type Product struct {
 	Stock int    `json:"stock"`
 }
 
+type Category struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+var categories []Category = []Category{
+	{ID: 1, Name: "Category 1", Description: "Description of Category 1"},
+	{ID: 2, Name: "Category 2", Description: "Description of Category 2"},
+	{ID: 3, Name: "Category 3", Description: "Description of Category 3"},
+}
+
+func getCategories(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(Response{
+		Status:  http.StatusOK,
+		Message: "Categories list",
+		Data:    categories,
+	})
+}
+
+func getCategory(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(Response{
+			Status:  http.StatusBadRequest,
+			Message: "Invalid ID",
+			Data:    nil,
+		})
+		return
+	}
+
+	for _, p := range categories {
+		if p.ID == id {
+			json.NewEncoder(w).Encode(Response{
+				Status:  http.StatusOK,
+				Message: "Category details",
+				Data:    p,
+			})
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(Response{
+		Status:  http.StatusNotFound,
+		Message: "Category not found",
+		Data:    nil,
+	})
+}
+
+func postCategory(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var newCategory Category
+	if err := json.NewDecoder(r.Body).Decode(&newCategory); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(Response{
+			Status:  http.StatusBadRequest,
+			Message: "Invalid request body",
+			Data:    nil,
+		})
+		return
+	}
+
+	newCategory.ID = len(categories) + 1
+	categories = append(categories, newCategory)
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(Response{
+		Status:  http.StatusCreated,
+		Message: "New category is added successfully",
+		Data:    newCategory,
+	})
+}
+
+func putCategory(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(Response{
+			Status:  http.StatusBadRequest,
+			Message: "Invalid ID",
+			Data:    nil,
+		})
+		return
+	}
+
+	var updatedCategory Category
+	if err := json.NewDecoder(r.Body).Decode(&updatedCategory); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(Response{
+			Status:  http.StatusBadRequest,
+			Message: "Invalid request body",
+			Data:    nil,
+		})
+		return
+	}
+
+	for i, p := range categories {
+		if p.ID == id {
+			updatedCategory.ID = id
+			categories[i] = updatedCategory
+			json.NewEncoder(w).Encode(Response{
+				Status:  http.StatusOK,
+				Message: "Category ID = " + idStr + " is updated successfully",
+				Data:    updatedCategory,
+			})
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(Response{
+		Status:  http.StatusNotFound,
+		Message: "Category not found",
+		Data:    nil,
+	})
+}
+
+func deleteCategory(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(Response{
+			Status:  http.StatusBadRequest,
+			Message: "Invalid ID",
+			Data:    nil,
+		})
+		return
+	}
+
+	for i, p := range categories {
+		if p.ID == id {
+			deletedCategory := p
+			categories = append(categories[:i], categories[i+1:]...)
+			json.NewEncoder(w).Encode(Response{
+				Status:  http.StatusOK,
+				Message: "Category ID = " + idStr + " is deleted successfully",
+				Data:    deletedCategory,
+			})
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(Response{
+		Status:  http.StatusNotFound,
+		Message: "Category not found",
+		Data:    nil,
+	})
+}
+
 var products []Product = []Product{
 	{Id: 1, Name: "Product 1", Price: 10000, Stock: 10},
 	{Id: 2, Name: "Product 2", Price: 20000, Stock: 20},
@@ -173,14 +332,20 @@ func main() {
 	http.HandleFunc("PUT /api/products/{id}", putProduct)
 	http.HandleFunc("DELETE /api/products/{id}", deleteProduct)
 
+	http.HandleFunc("GET /categories", getCategories)
+	http.HandleFunc("POST /categories", postCategory)
+	http.HandleFunc("GET /categories/{id}", getCategory)
+	http.HandleFunc("PUT /categories/{id}", putCategory)
+	http.HandleFunc("DELETE /categories/{id}", deleteCategory)
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":  http.StatusOK,
-			"message": "Hello, World!",
-			"data": map[string]interface{}{
+		json.NewEncoder(w).Encode(Response{
+			Status:  http.StatusOK,
+			Message: "Hello world!",
+			Data: map[string]interface{}{
 				"app":     "Cashier API",
-				"version": 1,
+				"version": "1.0.0",
 			},
 		})
 	})
