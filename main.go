@@ -402,6 +402,7 @@ func main() {
 	http.HandleFunc("/v2/categories", categoryHandler.HandleCategorys)
 	http.HandleFunc("/v2/categories/", categoryHandler.HandleCategoryByID)
 
+	//fix
 	addr := "0.0.0.0:" + config.Port
 	fmt.Println("Server running on: ", addr)
 
