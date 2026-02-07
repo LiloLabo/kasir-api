@@ -402,6 +402,20 @@ func main() {
 	http.HandleFunc("/v2/categories", categoryHandler.HandleCategorys)
 	http.HandleFunc("/v2/categories/", categoryHandler.HandleCategoryByID)
 
+	// Transaction
+	transactionRepo := repositories.NewTransactionRepository(db)
+	transactionService := services.NewTransactionService(transactionRepo)
+	transactionHandler := handlers.NewTransactionHandler(transactionService)
+
+	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout)
+
+	// REPORT
+	reportRepo := repositories.NewReportRepository(db)
+	reportService := services.NewReportService(reportRepo)
+	reportHandler := handlers.NewReportHandler(reportService)
+
+	http.HandleFunc("/api/report/hari-ini", reportHandler.HandleReportToday)
+	http.HandleFunc("/api/report", reportHandler.HandleReportDate)
 	//fix
 	addr := "0.0.0.0:" + config.Port
 	fmt.Println("Server running on: ", addr)
